@@ -1,0 +1,58 @@
+version: '3'
+
+services:
+  rabbitmq_servicio:
+    image: rabbitmq:3-management-alpine
+    container_name: rabbitmq_servicio_container
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - rabbitmq_datos:/var/lib/rabbitmq
+      - rabbitmq_logs:/var/log/rabbitmq
+    networks:
+      - red_soporte
+
+  mysql_base_soporte:
+    image: mysql
+    container_name: mysql_soporte_container
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: soporte_bd2024
+      MYSQL_USER: oscar
+      MYSQL_PASSWORD: o5592
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql_datos:/var/lib/mysql
+    networks:
+      - red_soporte
+
+  servicio_productor:
+    build: ./apiproductor
+    container_name: productor_servicio_container
+    environment:
+      - port=5000
+    ports:
+      - "5000:5000"
+    networks:
+      - red_soporte
+    depends_on:
+      - rabbitmq_servicio
+
+  servicio_consumidor:
+    build: ./apiconsumidor
+    container_name: consumidor_servicio_container
+    networks:
+      - red_soporte
+    depends_on:
+      - rabbitmq_servicio
+      - mysql_base_soporte
+
+volumes:
+  mysql_datos:
+  rabbitmq_datos:
+  rabbitmq_logs:
+
+networks:
+  red_soporte:
